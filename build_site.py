@@ -26,11 +26,13 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
-GLOBAL_COUNT = int(os.environ.get("DIGEST_GLOBAL", "15"))
-KENYA_COUNT = int(os.environ.get("DIGEST_KENYA", "10"))
-BUSINESS_COUNT = int(os.environ.get("DIGEST_BUSINESS", "6"))
-TECH_COUNT = int(os.environ.get("DIGEST_TECH", "6"))
-SPORTS_COUNT = int(os.environ.get("DIGEST_SPORTS", "6"))
+GLOBAL_COUNT = int(os.environ.get("DIGEST_GLOBAL", "20"))
+KENYA_COUNT = int(os.environ.get("DIGEST_KENYA", "12"))
+BUSINESS_COUNT = int(os.environ.get("DIGEST_BUSINESS", "8"))
+TECH_COUNT = int(os.environ.get("DIGEST_TECH", "8"))
+SPORTS_COUNT = int(os.environ.get("DIGEST_SPORTS", "8"))
+HEALTH_COUNT = int(os.environ.get("DIGEST_HEALTH", "6"))
+CULTURE_COUNT = int(os.environ.get("DIGEST_CULTURE", "6"))
 TIMEOUT = float(os.environ.get("DIGEST_TIMEOUT", "6"))
 USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
               "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -63,6 +65,11 @@ FEEDS = [
     # Sports
     ("https://www.theguardian.com/sport/rss", "sports", 3),
     ("https://feeds.bbci.co.uk/sport/rss.xml", "sports", 3),
+    # Health & Culture (more topics)
+    ("https://feeds.bbci.co.uk/news/health/rss.xml", "health", 3),
+    ("https://rss.nytimes.com/services/xml/rss/nyt/Health.xml", "health", 2),
+    ("https://www.theguardian.com/lifeandstyle/rss", "culture", 3),
+    ("https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml", "culture", 2),
 ]
 
 # A small, honest source label for unique Google News sources.
@@ -250,8 +257,8 @@ def _shorten(text, n=170):
 def build():
     debug = "--debug" in sys.argv
     if debug:
-        global GLOBAL_COUNT, KENYA_COUNT, BUSINESS_COUNT, TECH_COUNT, SPORTS_COUNT
-        GLOBAL_COUNT, KENYA_COUNT, BUSINESS_COUNT, TECH_COUNT, SPORTS_COUNT = 5, 3, 2, 2, 2
+        global GLOBAL_COUNT, KENYA_COUNT, BUSINESS_COUNT, TECH_COUNT, SPORTS_COUNT, HEALTH_COUNT, CULTURE_COUNT
+        GLOBAL_COUNT, KENYA_COUNT, BUSINESS_COUNT, TECH_COUNT, SPORTS_COUNT, HEALTH_COUNT, CULTURE_COUNT = 5, 3, 2, 2, 2, 2, 2
 
     all_items = []
     for url, kind, weight in FEEDS:
@@ -278,14 +285,18 @@ def build():
     b = sorted([x for x in ranked if x["kind"] == "business"], key=lambda x: -x["score"])
     t = sorted([x for x in ranked if x["kind"] == "technology"], key=lambda x: -x["score"])
     s = sorted([x for x in ranked if x["kind"] == "sports"], key=lambda x: -x["score"])
+    h = sorted([x for x in ranked if x["kind"] == "health"], key=lambda x: -x["score"])
+    c = sorted([x for x in ranked if x["kind"] == "culture"], key=lambda x: -x["score"])
     globals_list = g[:GLOBAL_COUNT]
     kenya_list = k[:KENYA_COUNT]
     business_list = b[:BUSINESS_COUNT]
     tech_list = t[:TECH_COUNT]
     sports_list = s[:SPORTS_COUNT]
+    health_list = h[:HEALTH_COUNT]
+    culture_list = c[:CULTURE_COUNT]
 
     # Fill in missing / Google placeholder images (concurrently, best-effort).
-    all_selected = globals_list + kenya_list + business_list + tech_list + sports_list
+    all_selected = globals_list + kenya_list + business_list + tech_list + sports_list + health_list + culture_list
     missing = [it for it in all_selected if not it["img"] or _is_placeholder_img(it["img"])]
     if missing:
         def _fill(it):
@@ -306,19 +317,21 @@ def build():
     for it in all_selected:
         it["img"] = _upgrade_img(it["img"])
 
-    html_out = render(globals_list, kenya_list, business_list, tech_list, sports_list, debug)
+    html_out = render(globals_list, kenya_list, business_list, tech_list, sports_list, health_list, culture_list, debug)
     os.makedirs(os.path.join(_DIST, "data"), exist_ok=True)
     with open(os.path.join(_DIST, "index.html"), "w", encoding="utf-8") as f:
         f.write(html_out)
     with open(os.path.join(_DIST, "data", "latest.json"), "w", encoding="utf-8") as f:
         json.dump({"generated": dt.datetime.now(dt.timezone.utc).isoformat(),
                    "global": globals_list, "kenya": kenya_list,
-                   "business": business_list, "technology": tech_list, "sports": sports_list}, f,
+                   "business": business_list, "technology": tech_list, "sports": sports_list,
+                   "health": health_list, "culture": culture_list}, f,
                   ensure_ascii=False, indent=2)
-    total = len(globals_list)+len(kenya_list)+len(business_list)+len(tech_list)+len(sports_list)
+    total = len(globals_list)+len(kenya_list)+len(business_list)+len(tech_list)+len(sports_list)+len(health_list)+len(culture_list)
     print(f"\nBuilt {_DIST}/index.html with {len(globals_list)} global + "
           f"{len(kenya_list)} Kenya + {len(business_list)} business + "
-          f"{len(tech_list)} tech + {len(sports_list)} sports = {total} stories.")
+          f"{len(tech_list)} tech + {len(sports_list)} sports + "
+          f"{len(health_list)} health + {len(culture_list)} culture = {total} stories.")
 
 
 _DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dist")
@@ -446,10 +459,12 @@ def _card(it, idx):
     </article>"""
 
 
-def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_list=None, debug=False):
+def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_list=None, health_list=None, culture_list=None, debug=False):
     business_list = business_list or []
     tech_list = tech_list or []
     sports_list = sports_list or []
+    health_list = health_list or []
+    culture_list = culture_list or []
     today = dt.date.today()
     today_label = (f"{today.strftime('%A')}, {today.day} "
                    f"{today.strftime('%B')} {today.year}")
@@ -460,6 +475,8 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
     cards_b = "".join(_card(it, i) for i, it in enumerate(business_list))
     cards_t = "".join(_card(it, i) for i, it in enumerate(tech_list))
     cards_s = "".join(_card(it, i) for i, it in enumerate(sports_list))
+    cards_h = "".join(_card(it, i) for i, it in enumerate(health_list))
+    cards_c = "".join(_card(it, i) for i, it in enumerate(culture_list))
     hero_html = ""
     if hero:
         if hero["img"]:
@@ -477,7 +494,7 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
         </div>
       </a>"""
     updated = dt.datetime.now(dt.timezone(dt.timedelta(hours=3))).strftime("%H:%M EAT")
-    total = len(globals_list) + len(kenya_list) + len(business_list) + len(tech_list) + len(sports_list)
+    total = len(globals_list) + len(kenya_list) + len(business_list) + len(tech_list) + len(sports_list) + len(health_list) + len(culture_list)
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -507,6 +524,8 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
       <button class="tab" role="tab" aria-selected="false" data-filter="business">Business <span>{len(business_list)}</span></button>
       <button class="tab" role="tab" aria-selected="false" data-filter="tech">Tech <span>{len(tech_list)}</span></button>
       <button class="tab" role="tab" aria-selected="false" data-filter="sports">Sports <span>{len(sports_list)}</span></button>
+      <button class="tab" role="tab" aria-selected="false" data-filter="health">Health <span>{len(health_list)}</span></button>
+      <button class="tab" role="tab" aria-selected="false" data-filter="culture">Culture <span>{len(culture_list)}</span></button>
     </nav>
 
     <div id="sec-hero" data-section="hero">{hero_html}</div>
@@ -536,6 +555,16 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
       <section class="grid">{cards_s}</section>
     </div>
 
+    <div id="sec-health" data-section="health">
+      <div class="section"><div class="section-head"><h2>Health</h2><span class="count">{len(health_list)} stories</span></div></div>
+      <section class="grid">{cards_h}</section>
+    </div>
+
+    <div id="sec-culture" data-section="culture">
+      <div class="section"><div class="section-head"><h2>Culture</h2><span class="count">{len(culture_list)} stories</span></div></div>
+      <section class="grid">{cards_c}</section>
+    </div>
+
     <footer>
       <span><b>Global Digest</b> — newspaper front page, rebuilt daily at {updated} ({today_label}).</span>
       <span>Sources: BBC, The Guardian, NY Times, DW, Al Jazeera, KBC, Kenyans.co.ke, Nairobi Wire, Capital FM.</span>
@@ -545,16 +574,18 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
 <script>
 (function(){{
   const tabs=document.querySelectorAll('.tab');
-  const secs={{hero:document.getElementById('sec-hero'),world:document.getElementById('sec-world'),kenya:document.getElementById('sec-kenya'),business:document.getElementById('sec-business'),tech:document.getElementById('sec-tech'),sports:document.getElementById('sec-sports')}};
+  const secs={{hero:document.getElementById('sec-hero'),world:document.getElementById('sec-world'),kenya:document.getElementById('sec-kenya'),business:document.getElementById('sec-business'),tech:document.getElementById('sec-tech'),sports:document.getElementById('sec-sports'),health:document.getElementById('sec-health'),culture:document.getElementById('sec-culture')}};
   function setFilter(f){{
     tabs.forEach(t=>t.setAttribute('aria-selected', String(t.dataset.filter===f)));
     Object.keys(secs).forEach(k=>{{ secs[k].style.display=''; }});
     if(f==='all'){{}}
-    else if(f==='world'){{ secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; }}
-    else if(f==='kenya'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; }}
-    else if(f==='business'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; }}
-    else if(f==='tech'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.sports.style.display='none'; }}
-    else if(f==='sports'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; }}
+    else if(f==='world'){{ secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
+    else if(f==='kenya'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
+    else if(f==='business'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
+    else if(f==='tech'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
+    else if(f==='sports'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
+    else if(f==='health'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.culture.style.display='none'; }}
+    else if(f==='culture'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; }}
     window.scrollTo({{top:0, behavior:'smooth'}});
   }}
   tabs.forEach(t=>t.addEventListener('click', ()=>setFilter(t.dataset.filter)));
