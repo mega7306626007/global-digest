@@ -1,23 +1,14 @@
-# Global Digest — the day's ~20 major stories, built daily
+# Global Digest — the day's 43 stories, built daily — newspaper front page
 
-A tiny, dependency-free news page: **16 major world stories + 10 top
-Kenyan stories**, each with a picture, a one-line summary, and a
-"Read more →" link to the original article. It regenerates itself
-every morning at 06:00 EAT and is served free forever from GitHub
-Pages — no servers, so it never spins down.
+A tiny, dependency-free newspaper: **15 World + 10 Kenya + 6 Business + 6 Technology + 6 Sports** — each with a high-res image (BBC 800px, Guardian 800w), one-line summary, and "Read more →" to the original publisher. Light paper theme, masthead, section rules. Regenerates every morning at 06:00 EAT on GitHub Pages — no servers.
 
 ## How it works
 
 1. `build_site.py` (Python **stdlib only** — no pip installs) fetches
-   free RSS feeds: Google News (US, UK, Kenya, Kiswahili), BBC World,
-   BBC Africa, Al Jazeera, Nation, Citizen, The Standard.
+    direct RSS (no Google News — avoids `googleusercontent` placeholder logos): BBC World/Africa/Business/Sport/Science, Guardian World/Africa/Business/Tech/Sport, NYT World/Business/Tech, DW, Al Jazeera, KBC, Kenyans.co.ke, Nairobi Wire, Capital FM.
 2. It dedupes by headline, ranks by source + freshness, keeps the top
-   16 world + 10 Kenyan stories, and pulls each story's lead image
-   (og:image fallback when a feed omits one; styled placeholder if
-   nothing is found).
-3. It renders a single, self-contained `dist/index.html` — dark
-   editorial theme, hero card for the #1 story, responsive card grid,
-   date header, "Xh ago" stamps.
+    15 world + 10 Kenya + 6 business + 6 tech + 6 sports (43 total), upgrades thumbs to 800px (`_upgrade_img`), drops Google placeholders (`_is_placeholder_img`), og:image fallback.
+3. It renders a single, self-contained `dist/index.html` — **light newspaper** paper `#fdfaf3`, masthead `The Global Digest`, double-rules, 3-column sections, hero lead, tab filter (All/World/Kenya/Business/Tech/Sports), `referrerpolicy="no-referrer"` images, readable serif headlines.
 
 ## Daily automation
 
@@ -47,8 +38,7 @@ You can also trigger a rebuild manually from the **Actions** tab.
 
 ## Config
 
-- `DIGEST_GLOBAL=16`, `DIGEST_KENYA=10` — counts can be overridden via
-  environment variables.
+- `DIGEST_GLOBAL=15`, `DIGEST_KENYA=10`, `DIGEST_BUSINESS=6`, `DIGEST_TECH=6`, `DIGEST_SPORTS=6` — overridden via env.
 - Edit `FEEDS` in `build_site.py` to add/remove sources.
 - `python build_site.py --debug` builds a tiny 5+3 page for testing.
 
