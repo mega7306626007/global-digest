@@ -2,14 +2,23 @@ name: Daily build
 
 # Rebuilds the site every morning (03:00 UTC = 06:00 EAT) and publishes
 # it to the gh-pages branch, which GitHub Pages serves. "Run workflow"
-# in the Actions tab rebuilds on demand too.
+# in the Actions tab rebuilds on demand too, and any push to main also
+# rebuilds so changes go live instantly.
 on:
   schedule:
     - cron: '0 3 * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   build:
