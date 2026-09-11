@@ -749,33 +749,38 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
   const searchBtn=document.querySelector('.search button');
   function doSearch(){{
     const v=(q? q.value.toLowerCase().trim() : '');
-    let visible=0, hiddenSections=0;
+    let visible=0;
     document.querySelectorAll('.card').forEach(c=>{{
-      const t=c.textContent.toLowerCase();
-      const show = !v || t.includes(v);
+      const txt=(c.dataset.title + ' ' + c.dataset.source + ' ' + c.textContent).toLowerCase();
+      const show = !v || txt.includes(v);
       c.style.display= show ? '' : 'none';
       if(show) visible++;
     }});
     const hero=document.getElementById('sec-hero');
-    if(hero){{ 
+    let heroVisible=false;
+    if(hero){{
       const ht=hero.textContent.toLowerCase();
-      hero.style.display = v && !ht.includes(v) && visible===0 ? 'none' : '';
+      heroVisible = !v || ht.includes(v);
+      // keep hero visible if it matches, or if any card matches (so All shows hero)
+      if(v && !heroVisible && visible===0) hero.style.display='none'; else hero.style.display='';
+      if(heroVisible) visible++;
     }}
     document.querySelectorAll('[data-section]').forEach(sec=>{{
       if(sec.id==='sec-hero') return;
+      const heading= sec.querySelector('h2') ? sec.querySelector('h2').textContent.toLowerCase() : '';
       const cards=sec.querySelectorAll('.card');
       const any=[...cards].some(c=>c.style.display!=='none');
-      sec.style.display = v && !any ? 'none' : '';
-      if(sec.style.display==='none') hiddenSections++;
+      const headingMatch = v && heading.includes(v);
+      sec.style.display = (!v || any || headingMatch) ? '' : 'none';
     }});
     let msg=document.getElementById('noResults');
-    if(v && visible===0){{ 
-      if(!msg){{ msg=document.createElement('div'); msg.id='noResults'; msg.style.cssText='padding:24px; text-align:center; color:var(--muted); font-family:system-ui,sans-serif; border:1px dashed var(--rule-light); margin:16px 0; background:#fff'; msg.innerHTML='No results for "<b></b>" — try another term or <a href="#" onclick="document.getElementById(\'search\').value=\'\';document.getElementById(\'search\').dispatchEvent(new Event(\'input\'));return false" style="color:var(--accent)">clear</a>'; document.querySelector('main').prepend(msg); }}
+    if(v && visible===0){{
+      if(!msg){{ msg=document.createElement('div'); msg.id='noResults'; msg.style.cssText='padding:24px; text-align:center; color:var(--muted); font-family:system-ui,sans-serif; border:1px dashed var(--rule-light); margin:16px 0; background:#fff'; msg.innerHTML='No results for "<b></b>" — try "Ruto", "Trump" or "Business" or <a href="#" onclick="document.getElementById(\'search\').value=\'\';document.getElementById(\'search\').dispatchEvent(new Event(\'input\'));return false" style="color:var(--accent)">clear</a>'; document.querySelector('main').prepend(msg); }}
       msg.querySelector('b').textContent=v;
       msg.style.display='';
     }} else if(msg) msg.style.display='none';
   }}
-  if(q){{ q.addEventListener('input', doSearch); q.addEventListener('keydown', e=>{{ if(e.key==='Enter'){{ e.preventDefault(); doSearch(); }} }}); }}
+  if(q){{ q.addEventListener('input', doSearch); q.addEventListener('search', doSearch); q.addEventListener('keydown', e=>{{ if(e.key==='Enter'){{ e.preventDefault(); doSearch(); }} }}); }}
   if(searchBtn) searchBtn.addEventListener('click', e=>{{ e.preventDefault(); doSearch(); q.focus(); }});
   const btn=document.getElementById('themeToggle');
   const saved=localStorage.getItem('gd-theme');
