@@ -642,7 +642,7 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
         <button class="tab" role="tab" aria-selected="false" data-filter="health">Health <span>{len(health_list)}</span></button>
         <button class="tab" role="tab" aria-selected="false" data-filter="culture">Culture <span>{len(culture_list)}</span></button>
       </nav>
-      <label class="search"><input id="search" type="search" placeholder="Search headlines…" aria-label="Search"><button aria-label="Search">⌕</button></label>
+      <label class="search"><input id="search" type="search" placeholder="Search headlines…" aria-label="Search" autocomplete="off"><button type="button" aria-label="Search">⌕</button></label>
     </div>
 
     <div class="layout">
@@ -733,13 +733,37 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
   }}
   tabs.forEach(t=>t.addEventListener('click', ()=>setFilter(t.dataset.filter)));
   const q=document.getElementById('search');
-  q&&q.addEventListener('input', ()=>{{
-    const v=q.value.toLowerCase().trim();
+  const searchBtn=document.querySelector('.search button');
+  function doSearch(){{
+    const v=(q? q.value.toLowerCase().trim() : '');
+    let visible=0, hiddenSections=0;
     document.querySelectorAll('.card').forEach(c=>{{
       const t=c.textContent.toLowerCase();
-      c.style.display= v && !t.includes(v) ? 'none' : '';
+      const show = !v || t.includes(v);
+      c.style.display= show ? '' : 'none';
+      if(show) visible++;
     }});
-  }});
+    const hero=document.getElementById('sec-hero');
+    if(hero){{ 
+      const ht=hero.textContent.toLowerCase();
+      hero.style.display = v && !ht.includes(v) && visible===0 ? 'none' : '';
+    }}
+    document.querySelectorAll('[data-section]').forEach(sec=>{{
+      if(sec.id==='sec-hero') return;
+      const cards=sec.querySelectorAll('.card');
+      const any=[...cards].some(c=>c.style.display!=='none');
+      sec.style.display = v && !any ? 'none' : '';
+      if(sec.style.display==='none') hiddenSections++;
+    }});
+    let msg=document.getElementById('noResults');
+    if(v && visible===0){{ 
+      if(!msg){{ msg=document.createElement('div'); msg.id='noResults'; msg.style.cssText='padding:24px; text-align:center; color:var(--muted); font-family:system-ui,sans-serif; border:1px dashed var(--rule-light); margin:16px 0; background:#fff'; msg.innerHTML='No results for "<b></b>" — try another term or <a href="#" onclick="document.getElementById(\'search\').value=\'\';document.getElementById(\'search\').dispatchEvent(new Event(\'input\'));return false" style="color:var(--accent)">clear</a>'; document.querySelector('main').prepend(msg); }}
+      msg.querySelector('b').textContent=v;
+      msg.style.display='';
+    }} else if(msg) msg.style.display='none';
+  }}
+  if(q){{ q.addEventListener('input', doSearch); q.addEventListener('keydown', e=>{{ if(e.key==='Enter'){{ e.preventDefault(); doSearch(); }} }}); }}
+  if(searchBtn) searchBtn.addEventListener('click', e=>{{ e.preventDefault(); doSearch(); q.focus(); }});
   const btn=document.getElementById('themeToggle');
   const saved=localStorage.getItem('gd-theme');
   if(saved) document.documentElement.setAttribute('data-theme', saved);
