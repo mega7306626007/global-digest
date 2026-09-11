@@ -544,6 +544,9 @@ _CSS = """
     .trend a:hover{color:var(--accent)}
     .trend span{font-family: system-ui, sans-serif; font-size:10px; color:var(--muted); display:block; margin-top:4px}
     .newsletter input{width:100%; padding:11px 12px; border:1px solid var(--rule-light); border-radius:6px; font-size:13px; margin-bottom:10px; background:#fff; color:var(--ink)}
+    #newsletter{scroll-margin-top:90px}
+    .search input{color:var(--ink) !important; background:#fff !important}
+    [data-theme="dark"] .search input{color:var(--ink) !important; background:var(--paper-2) !important}
     .newsletter input::placeholder{color:var(--muted2)}
     [data-theme="dark"] .newsletter input{background:var(--paper-2); color:var(--ink)}
     .newsletter button{width:100%; padding:11px; background:var(--ink); color:#fff; border:0; border-radius:6px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; transition: background .15s ease}
@@ -667,7 +670,7 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
     </div>
     <header class="mast">
       <div class="mast-top"><span>VOL. I — NO. 1</span><span>FOUNDED 2026 • NAIROBI • LONDON • NEW YORK</span><span>Price: Free · Edition {updated}</span></div>
-      <div class="mast-title"><span class="kicker">INTERNATIONAL</span> The Global Digest</div>
+      <div class="mast-title"><span class="kicker">INTERNATIONAL</span> The Global Digest <span style="font-size:10px; letter-spacing:.12em; background:var(--accent); color:#fff; padding:4px 8px; vertical-align:middle; margin-left:8px">ELITE EDITION</span></div>
       <div class="mast-sub"><span><b>EST. 2026</b> — WORLD · KENYA · BUSINESS · TECH · SPORTS · HEALTH · CULTURE · {total} STORIES DAILY</span><span class="pill"><i></i> Live · Updated {updated}</span></div>
     </header>
 
@@ -814,14 +817,24 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
   }}
   if(q){{ q.addEventListener('input', doSearch); q.addEventListener('search', doSearch); q.addEventListener('keydown', e=>{{ if(e.key==='Enter'){{ e.preventDefault(); doSearch(); }} }}); }}
   if(searchBtn) searchBtn.addEventListener('click', e=>{{ e.preventDefault(); doSearch(); q.focus(); }});
-  const btn=document.getElementById('themeToggle');
-  const saved=localStorage.getItem('gd-theme');
-  if(saved) document.documentElement.setAttribute('data-theme', saved);
-  btn&&btn.addEventListener('click', ()=>{{
-    const cur=document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
-    if(cur==='light') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme','dark');
-    localStorage.setItem('gd-theme', cur==='light'?'light':'dark');
-  }});
+  let btn=null;
+  try{{
+    btn=document.getElementById('themeToggle');
+    const saved=localStorage.getItem('gd-theme');
+    if(saved) document.documentElement.setAttribute('data-theme', saved);
+    if(btn) btn.addEventListener('click', ()=>{{
+      try{{
+        const cur=document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
+        if(cur==='light') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme','dark');
+        localStorage.setItem('gd-theme', cur==='light'?'light':'dark');
+      }}catch(e){{}}
+    }});
+  }}catch(e){{}}
+  // Subscribe smooth scroll with offset
+  try{{
+    const subLink=document.querySelector('a[href="#newsletter"]');
+    if(subLink) subLink.addEventListener('click', e=>{{ e.preventDefault(); const el=document.getElementById('newsletter'); if(el) el.scrollIntoView({{behavior:'smooth', block:'start'}}); }});
+  }}catch(e){{}}
   // Bookmarks (guarded)
   let savedIds=[];
   try{{ savedIds=JSON.parse(localStorage.getItem('gd-saved')||'[]'); }}catch(e){{ savedIds=[]; }}
