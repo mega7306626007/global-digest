@@ -263,7 +263,7 @@ def _timeago(ts):
     return f"{secs // 86400}d ago"
 
 
-def _shorten(text, n=170):
+def _shorten(text, n=260):
     text = _HTML_RE.sub(" ", text or "")
     text = _WS.sub(" ", text).strip()
     if len(text) <= n:
@@ -491,9 +491,9 @@ _CSS = """
     .save[aria-pressed="true"]{background:var(--ink); color:#fff; border-color:var(--ink)}
     .cbody{padding:12px 14px 14px; display:flex; flex-direction:column; gap:8px; flex:1}
     .cbody h3{line-height:1.18; font-family: Georgia, serif; font-weight:900; letter-spacing:-.015em}
-    .cbody h3 a{color:var(--ink); text-decoration:none; font-size:17px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
+    .cbody h3 a{color:var(--ink); text-decoration:none; font-size:17px; display:block; font-family: Georgia, serif; line-height:1.28}
     .cbody h3 a:hover{text-decoration:underline; text-decoration-thickness:1.5px; text-underline-offset:3px}
-    .card .sum{color:#2b2b2b; font-size:13.2px; line-height:1.55; text-align:justify; hyphens:auto; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; min-height:62px}
+    .card .sum{color:#2b2b2b; font-size:13.2px; line-height:1.55; text-align:left; hyphens:auto; display:block; min-height:auto}
     [data-theme="dark"] .card .sum{color:#cbd5e1}
     .card .meta{margin-top:auto; padding-top:8px; border-top:1px solid var(--rule-faint); display:flex; align-items:center; justify-content:space-between; font-size:10px}
     /* Sidebar */
