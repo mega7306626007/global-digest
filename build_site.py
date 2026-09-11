@@ -655,7 +655,7 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
         <button class="tab" role="tab" aria-selected="false" data-filter="health">Health <span>{len(health_list)}</span></button>
         <button class="tab" role="tab" aria-selected="false" data-filter="culture">Culture <span>{len(culture_list)}</span></button>
       </nav>
-      <label class="search"><input id="search" type="search" placeholder="Search headlines…" aria-label="Search" autocomplete="off"><button type="button" aria-label="Search">⌕</button></label>
+      <div class="search"><input id="search" type="search" placeholder="Search headlines…" aria-label="Search" autocomplete="off"><button type="button" aria-label="Search">⌕</button></div>
     </div>
 
     <div class="layout">
@@ -790,9 +790,10 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
     if(cur==='light') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme','dark');
     localStorage.setItem('gd-theme', cur==='light'?'light':'dark');
   }});
-  // Bookmarks
+  // Bookmarks (guarded)
+  let savedIds=[];
+  try{{ savedIds=JSON.parse(localStorage.getItem('gd-saved')||'[]'); }}catch(e){{ savedIds=[]; }}
   const savedBox=document.getElementById('savedBox'), savedList=document.getElementById('savedList');
-  let savedIds=JSON.parse(localStorage.getItem('gd-saved')||'[]');
   function renderSaved(){{
     if(!savedIds.length){{ savedBox.style.display='none'; return; }}
     savedBox.style.display=''; savedList.innerHTML=savedIds.map(function(id){{ var el=document.querySelector('[data-id="'+id+'"]'); return el ? '<div style="padding:8px 0; border-bottom:1px solid var(--rule-faint)"><a href="'+el.dataset.link+'" target="_blank" style="font-weight:700; color:var(--ink); text-decoration:none">'+el.dataset.title+'</a><div style="font-size:11px; color:var(--muted)">'+el.dataset.source+'</div></div>' : ''; }}).join('');
