@@ -100,17 +100,29 @@ def _source_of(url):
 
 
 def _fetch(url, timeout=TIMEOUT, binary=False):
-    """Returns bytes/str body or None (never raises)."""
+    """Returns bytes/str body or None (never raises). Cache-busted for fresh news."""
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT,
-                                                   "Accept": "*/*"})
+        # Bust caches for daily freshness
+        sep = "&" if "?" in url else "?"
+        busted = f"{url}{sep}_={int(dt.datetime.now().timestamp())}"
+        req = urllib.request.Request(busted, headers={"User-Agent": USER_AGENT,
+                                                      "Accept": "*/*",
+                                                      "Cache-Control": "no-cache",
+                                                      "Pragma": "no-cache"})
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             data = resp.read()
         if binary:
             return data
         return data.decode("utf-8", errors="replace")
     except Exception:
-        return None
+        # fallback without busting
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                data = resp.read()
+            return data if binary else data.decode("utf-8", errors="replace")
+        except Exception:
+            return None
 
 
 def _local(tag):
@@ -147,8 +159,9 @@ def _parse_rss(body):
             elif tag == "enclosure" and child.attrib.get("url") and not img:
                 if "image" in child.attrib.get("type", ""):
                     img = child.attrib["url"]
-            elif tag == "pubdate":
-                pub = text
+            elif tag.lower() in ("pubdate", "published", "updated", "date"):
+                if not pub:
+                    pub = text
         if "http" not in link:
             # Atom <link href=...> only
             at = node.findall(".//*{link}") or node.findall(".//link")
@@ -162,9 +175,19 @@ def _parse_rss(body):
         if pub:
             try:
                 pub_dt = email.utils.parsedate_to_datetime(pub)
+                if pub_dt is None:
+                    raise ValueError
                 pub_int = int(pub_dt.timestamp())
             except Exception:
-                pass
+                try:
+                    # Atom ISO8601 like 2026-09-11T00:46:00Z
+                    iso = pub.strip().replace("Z", "+00:00")
+                    pub_dt = dt.datetime.fromisoformat(iso)
+                    if pub_dt.tzinfo is None:
+                        pub_dt = pub_dt.replace(tzinfo=dt.timezone.utc)
+                    pub_int = int(pub_dt.timestamp())
+                except Exception:
+                    pass
         items.append({"title": title, "link": link,
                        "summary": _WS.sub(" ", summary).strip(),
                        "img": _upgrade_img(img), "pub_int": pub_int,
@@ -278,13 +301,23 @@ def build():
         print(f"  [ok]   {url} -> {parsed} items")
 
     ranked = _unique(all_items)
-    g = sorted([x for x in ranked if x["kind"] == "global"], key=lambda x: -x["score"])
-    k = sorted([x for x in ranked if x["kind"] == "kenya"], key=lambda x: -x["score"])
-    b = sorted([x for x in ranked if x["kind"] == "business"], key=lambda x: -x["score"])
-    t = sorted([x for x in ranked if x["kind"] == "technology"], key=lambda x: -x["score"])
-    s = sorted([x for x in ranked if x["kind"] == "sports"], key=lambda x: -x["score"])
-    h = sorted([x for x in ranked if x["kind"] == "health"], key=lambda x: -x["score"])
-    c = sorted([x for x in ranked if x["kind"] == "culture"], key=lambda x: -x["score"])
+    # Freshness bonus: newer stories rank higher (48h window)
+    now = int(dt.datetime.now().timestamp())
+    def _score_with_freshness(lst):
+        out=[]
+        for x in lst:
+            age_h = (now - x["pub_int"]) / 3600
+            freshness = max(0, 48 - age_h) * 0.8  # up to +38 for just-published
+            x["_final"] = x["score"] + freshness
+            out.append(x)
+        return sorted(out, key=lambda y: -y["_final"])
+    g = _score_with_freshness([x for x in ranked if x["kind"] == "global"])
+    k = _score_with_freshness([x for x in ranked if x["kind"] == "kenya"])
+    b = _score_with_freshness([x for x in ranked if x["kind"] == "business"])
+    t = _score_with_freshness([x for x in ranked if x["kind"] == "technology"])
+    s = _score_with_freshness([x for x in ranked if x["kind"] == "sports"])
+    h = _score_with_freshness([x for x in ranked if x["kind"] == "health"])
+    c = _score_with_freshness([x for x in ranked if x["kind"] == "culture"])
     globals_list = g[:GLOBAL_COUNT]
     kenya_list = k[:KENYA_COUNT]
     business_list = b[:BUSINESS_COUNT]
