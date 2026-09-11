@@ -419,6 +419,7 @@ _CSS = """
       --rule:#0a0a0a; --rule-light:#d8cfb8; --rule-faint:#e9e1ca;
       --accent:#b91c1c; --accent-2:#dc2626; --gold:#a16207;
       --shadow: 0 1px 4px rgba(0,0,0,.08);
+      --font-display: "Fraunces", Georgia, serif; --font-body: "Inter", system-ui, sans-serif;
       --shadow-hover: 0 12px 28px rgba(0,0,0,.12);
     }
     [data-theme="dark"]{
@@ -457,7 +458,7 @@ _CSS = """
     }
     .mast-top{font-family: system-ui, sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
       display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--rule-light); padding-bottom:10px; margin-bottom:14px}
-    .mast-title{font-family: 'Times New Roman', Times, Georgia, serif; font-weight:900;
+    .mast-title{font-family: var(--font-display), 'Times New Roman', serif; font-weight:900;
       font-size: clamp(44px, 7.2vw, 78px); letter-spacing:-.03em; line-height:.88; text-transform:uppercase; color:var(--ink); display:flex; align-items:center; justify-content:center; gap:10px}
     .mast-title .kicker{font-size:.28em; letter-spacing:.28em; font-weight:700; color:var(--accent); border:1px solid var(--accent); padding:4px 10px; vertical-align:middle}
     .mast-sub{font-family: system-ui, sans-serif; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
@@ -519,7 +520,7 @@ _CSS = """
     /* Sections */
     .section{margin:24px 0 10px; border-top:3px double var(--rule); padding-top:10px}
     .section-head{display:flex; align-items:baseline; gap:10px; justify-content:space-between; flex-wrap:wrap}
-    .section h2{font-family: Georgia, serif; font-size:24px; font-weight:900; letter-spacing:-.02em; text-transform:uppercase; color:var(--ink); display:flex; align-items:center; gap:10px}
+    .section h2{font-family: var(--font-display), Georgia, serif; font-size:24px; font-weight:900; letter-spacing:-.02em; text-transform:uppercase; color:var(--ink); display:flex; align-items:center; gap:10px}
     .section h2::before{content:''; width:4px; height:18px; background:var(--accent); display:inline-block}
     .section .count{font-family: system-ui, sans-serif; font-size:10px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--muted)}
     /* Grid */
@@ -668,7 +669,10 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
 <meta name="description" content="The {total} biggest stories today — World {len(globals_list)}, Kenya {len(kenya_list)}, Business {len(business_list)}, Tech {len(tech_list)}, Sports {len(sports_list)} — newspaper edition.">
 <meta property="og:title" content="Global Digest — Today's Front Page">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📰</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,900&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
 <style>{_CSS}</style>
 </head>
 <body>
@@ -682,7 +686,7 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
     </div>
     <header class="mast">
       <div class="mast-top"><span>VOL. I — NO. 1</span><span>FOUNDED 2026 • NAIROBI • LONDON • NEW YORK</span><span>Price: Free · Edition {updated}</span></div>
-      <div class="mast-title"><span class="kicker">INTERNATIONAL</span> The Global Digest</div>
+      <div class="mast-title"><span class="kicker">INTERNATIONAL</span> The Global Digest <span style="font-family:Inter,sans-serif; font-size:9px; letter-spacing:.18em; background:var(--ink); color:#fff; padding:4px 8px; vertical-align:middle; margin-left:8px; border-radius:2px">WORLD-CLASS EDITION • EST. 2026</span></div>
       <div class="mast-sub"><span><b>EST. 2026</b> — WORLD · KENYA · BUSINESS · TECH · SPORTS · HEALTH · CULTURE · POLITICS · ENTERTAINMENT · {total} STORIES DAILY</span><span class="pill"><i></i> Live · Updated {updated}</span></div>
     </header>
 
