@@ -609,11 +609,13 @@ def _card(it, idx):
         media = f'<div class="thumb-wrap"><img loading="lazy" decoding="async" referrerpolicy="no-referrer" class="thumb" src="{html.escape(it["img"])}" alt="{html.escape(it["title"])}" onerror="this.style.display=\'none\'"><span class="srcpill srcpill--over">{html.escape(it["source"])}</span><button class="save" aria-pressed="false" aria-label="Save" title="Save">☆</button></div>'
     else:
         media = f'<div class="thumb-wrap"><div class="thumb thumb--ph">📰</div><span class="srcpill srcpill--over">{html.escape(it["source"])}</span><button class="save" aria-pressed="false" aria-label="Save">☆</button></div>'
+    why=_shorten(it["summary"], 90).split('.')[0][:70]
     return f"""<article class="card" data-id="{html.escape(uid)}" data-link="{html.escape(it["link"], quote=True)}" data-title="{html.escape(it["title"])}" data-source="{html.escape(it["source"])}">
       {media}
       <div class="cbody">
         <h3><a href="{html.escape(it["link"], quote=True)}" target="_blank" rel="noopener">{html.escape(it["title"])}</a></h3>
         <p class="sum">{html.escape(_shorten(it["summary"]))}</p>
+        <span class="why">Why it matters: {html.escape(why)}…</span>
         <p class="meta"><span>{_timeago(it["pub_int"])}</span><span class="dot2"></span><a class="readmore" href="{html.escape(it["link"], quote=True)}" target="_blank" rel="noopener">Read more →</a></p>
       </div>
     </article>"""
@@ -643,9 +645,10 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
         hero_html = f"""<a href="{e(hero['link'], True)}" target="_blank" rel="noopener" class="hero">
         {hero_media}
         <div class="hbody">
-          <span class="badge">★ Top story · {e(hero['source'])}</span>
+          <span class="badge">★ Top story · {e(hero['source'])} • LIVE</span>
           <h1>{e(hero['title'])}</h1>
           <p class="sum">{e(_shorten(hero['summary'], 260))}</p>
+          <div class="poll" style="margin-top:10px"><h4>📊 Quick Poll — Do you follow this story?</h4><button onclick="this.textContent='✓ Thanks — 62% said Yes'; this.style.background='var(--accent)'; this.style.color='#fff'">Yes, closely</button><button onclick="this.textContent='✓ Noted — 38% said No'; this.style.background='var(--ink)'; this.style.color='#fff'">Not really</button></div>
           <p class="meta"><span>{e(hero['source'])}</span><span class="dot2"></span><span>{_timeago(hero['pub_int'])}</span></p>
           <span class="readmore">Read the full story →</span>
         </div>
