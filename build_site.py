@@ -440,10 +440,12 @@ _CSS = """
     [data-theme="dark"] .tab[aria-selected="true"]{background:var(--paper-2); color:var(--ink)}
     .tab span{font-weight:400; opacity:.7; margin-left:3px}
     .search{position:relative; flex:0 0 260px; display:flex; align-items:center}
-    .search input{width:100%; padding:10px 36px 10px 14px; border:1px solid var(--rule-light); background:#fff; border-radius:999px;
+    .search input{width:100%; padding:10px 36px 10px 14px; border:1px solid var(--rule-light); background:#fff; color:var(--ink); border-radius:999px;
       font-family: system-ui, sans-serif; font-size:13px; outline:none}
+    .search input::placeholder{color:var(--muted2); opacity:1}
     .search input:focus{border-color:var(--ink); box-shadow: 0 0 0 3px rgba(0,0,0,.06)}
     [data-theme="dark"] .search input{background:var(--paper-2); color:var(--ink); border-color:var(--rule-light)}
+    [data-theme="dark"] .search input::placeholder{color:var(--muted2)}
     .search button{position:absolute; right:4px; top:4px; bottom:4px; width:32px; border-radius:999px; border:0; background:var(--ink); color:#fff; cursor:pointer}
     /* Layout with sidebar */
     .layout{display:grid; grid-template-columns: 1fr 340px; gap:22px; margin-top:16px}
@@ -495,6 +497,17 @@ _CSS = """
     .cbody h3 a:hover{text-decoration:underline; text-decoration-thickness:1.5px; text-underline-offset:3px}
     .card .sum{color:#2b2b2b; font-size:13.2px; line-height:1.55; text-align:left; hyphens:auto; display:block; min-height:auto}
     [data-theme="dark"] .card .sum{color:#cbd5e1}
+    [data-theme="dark"] .hero p.sum{color:#d6d3d1}
+    [data-theme="dark"] .cbody h3 a{color:var(--ink)}
+    [data-theme="dark"] .topbar{color:var(--muted); border-color:var(--rule-light)}
+    [data-theme="dark"] header.mast{background:var(--paper); border-color:var(--rule)}
+    [data-theme="dark"] .mast-top{color:var(--muted); border-color:var(--rule-light)}
+    [data-theme="dark"] .mast-sub{color:var(--muted); border-color:var(--rule-light)}
+    [data-theme="dark"] .ticker{background:var(--paper-2)}
+    [data-theme="dark"] .box{background:var(--paper-2); border-color:var(--rule-light)}
+    [data-theme="dark"] .newsletter input{background:var(--paper-2); color:var(--ink); border-color:var(--rule-light)}
+    [data-theme="dark"] .newsletter input::placeholder{color:var(--muted2)}
+    [data-theme="dark"] footer{color:var(--muted); border-color:var(--rule-light)}
     .card .meta{margin-top:auto; padding-top:8px; border-top:1px solid var(--rule-faint); display:flex; align-items:center; justify-content:space-between; font-size:10px}
     /* Sidebar */
     .sidebar{display:flex; flex-direction:column; gap:16px; position:sticky; top:76px; align-self:start}
