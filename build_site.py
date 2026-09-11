@@ -791,7 +791,7 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
     h.addEventListener('click', ()=>{{
       const txt=h.textContent.toLowerCase().trim();
       const map={{world:'world', kenya:'kenya', business:'business', technology:'tech', tech:'tech', sports:'sports', health:'health', culture:'culture'}};
-      for(const k in map){{ if(txt.includes(k)) {{ setFilter(map[k]); document.querySelector('.toolbar')?.scrollIntoView({{behavior:'smooth'}}); break; }} }}
+      for(const k in map){{ if(txt.includes(k)) {{ setFilter(map[k]); var tb=document.querySelector('.toolbar'); if(tb) tb.scrollIntoView({{behavior:'smooth'}}); break; }} }}
     }});
   }});
   const q=document.getElementById('search');
