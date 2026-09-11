@@ -1,0 +1,40 @@
+name: Daily build
+
+# Rebuilds the site every morning (00:50 UTC = 03:50 EAT) — temporary test — and publishes
+# it to the gh-pages branch, which GitHub Pages serves. "Run workflow"
+# in the Actions tab rebuilds on demand too, and any push to main also
+# rebuilds so changes go live instantly.
+on:
+  schedule:
+    - cron: '50 0 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build the site
+        run: python build_site.py
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true
