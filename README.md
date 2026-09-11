@@ -1,14 +1,14 @@
-# Global Digest — the day's 43 stories, built daily — newspaper front page
+# Global Digest — the day's 150 stories, built daily — newspaper front page
 
-A tiny, dependency-free newspaper: **15 World + 10 Kenya + 6 Business + 6 Technology + 6 Sports** — each with a high-res image (BBC 800px, Guardian 800w), one-line summary, and "Read more →" to the original publisher. Light paper theme, masthead, section rules. Regenerates every morning at 06:00 EAT on GitHub Pages — no servers.
+A tiny, dependency-free newspaper: **30 World + 20 Kenya + 20 Business + 20 Technology + 20 Sports + 20 Health + 20 Culture (150 total)** — each with a high-res image (BBC 800px, Guardian width), one-line summary, and "Read more →" to the original publisher. Light paper `#fdfaf3`, masthead, ticker, search, dark/light, bookmarks. Regenerates daily at 03:50 EAT (auto) on GitHub Pages — no servers.
 
 ## How it works
 
 1. `build_site.py` (Python **stdlib only** — no pip installs) fetches
     direct RSS (no Google News — avoids `googleusercontent` placeholder logos): BBC World/Africa/Business/Sport/Science, Guardian World/Africa/Business/Tech/Sport, NYT World/Business/Tech, DW, Al Jazeera, KBC, Kenyans.co.ke, Nairobi Wire, Capital FM.
-2. It dedupes by headline, ranks by source + freshness, keeps the top
-    15 world + 10 Kenya + 6 business + 6 tech + 6 sports (43 total), upgrades thumbs to 800px (`_upgrade_img`), drops Google placeholders (`_is_placeholder_img`), og:image fallback.
-3. It renders a single, self-contained `dist/index.html` — **light newspaper** paper `#fdfaf3`, masthead `The Global Digest`, double-rules, 3-column sections, hero lead, tab filter (All/World/Kenya/Business/Tech/Sports), `referrerpolicy="no-referrer"` images, readable serif headlines.
+2. It dedupes by headline, ranks by source + freshness (48h bonus), keeps the top
+    30 world + 20 Kenya + 20 business + 20 tech + 20 sports + 20 health + 20 culture (150 total), upgrades BBC thumbs to 800px (`_upgrade_img` keeps Guardian signature), drops Google placeholders (`_is_placeholder_img`), `referrerpolicy="no-referrer"` + `onerror` fallback.
+3. It renders a single, self-contained `dist/index.html` — **light newspaper** paper `#fdfaf3` + dark `data-theme`, masthead, ticker, toolbar with search + `All 150` tabs, hero lead, 3-column grids, `layout` with `Trending`/`Saved`/`Newsletter` sidebar, print-ready.
 
 ## Daily automation
 
@@ -38,7 +38,7 @@ You can also trigger a rebuild manually from the **Actions** tab.
 
 ## Config
 
-- `DIGEST_GLOBAL=15`, `DIGEST_KENYA=10`, `DIGEST_BUSINESS=6`, `DIGEST_TECH=6`, `DIGEST_SPORTS=6` — overridden via env.
+- `DIGEST_GLOBAL=30`, `DIGEST_KENYA=20`, `DIGEST_BUSINESS=20`, `DIGEST_TECH=20`, `DIGEST_SPORTS=20`, `DIGEST_HEALTH=20`, `DIGEST_CULTURE=20` — overridden via env (`150` total).
 - Edit `FEEDS` in `build_site.py` to add/remove sources.
 - `python build_site.py --debug` builds a tiny 5+3 page for testing.
 

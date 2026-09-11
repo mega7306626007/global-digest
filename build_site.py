@@ -2,8 +2,8 @@
 """Global Digest - daily top-stories site builder (Python stdlib only).
 
 Fetches free RSS feeds (no API keys), dedupes, ranks, and renders a
-self-contained newspaper-style index.html with ~15 world + 10 Kenya + 6 business
-+ 6 tech + 6 sports stories (≈43 daily). Meant to run daily from GitHub Actions; the
+self-contained newspaper-style index.html with 30 world + 20 Kenya + 20 business
++ 20 tech + 20 sports + 20 health + 20 culture stories (150 daily). Meant to run daily from GitHub Actions; the
 generated dist/ folder is what GitHub Pages publishes.
 
 Usage:
@@ -26,13 +26,13 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
-GLOBAL_COUNT = int(os.environ.get("DIGEST_GLOBAL", "24"))
-KENYA_COUNT = int(os.environ.get("DIGEST_KENYA", "15"))
-BUSINESS_COUNT = int(os.environ.get("DIGEST_BUSINESS", "10"))
-TECH_COUNT = int(os.environ.get("DIGEST_TECH", "10"))
-SPORTS_COUNT = int(os.environ.get("DIGEST_SPORTS", "10"))
-HEALTH_COUNT = int(os.environ.get("DIGEST_HEALTH", "8"))
-CULTURE_COUNT = int(os.environ.get("DIGEST_CULTURE", "8"))
+GLOBAL_COUNT = int(os.environ.get("DIGEST_GLOBAL", "30"))
+KENYA_COUNT = int(os.environ.get("DIGEST_KENYA", "20"))
+BUSINESS_COUNT = int(os.environ.get("DIGEST_BUSINESS", "20"))
+TECH_COUNT = int(os.environ.get("DIGEST_TECH", "20"))
+SPORTS_COUNT = int(os.environ.get("DIGEST_SPORTS", "20"))
+HEALTH_COUNT = int(os.environ.get("DIGEST_HEALTH", "20"))
+CULTURE_COUNT = int(os.environ.get("DIGEST_CULTURE", "20"))
 # Display total 85
 TIMEOUT = float(os.environ.get("DIGEST_TIMEOUT", "6"))
 USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
