@@ -750,9 +750,19 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
   function doSearch(){{
     const v=(q? q.value.toLowerCase().trim() : '');
     let visible=0;
+    const sectionMatch={{}};
+    document.querySelectorAll('[data-section]').forEach(sec=>{{
+      if(sec.id==='sec-hero') return;
+      const h=sec.querySelector('h2');
+      const heading=h ? h.textContent.toLowerCase() : '';
+      sectionMatch[sec.id]= v && heading.includes(v);
+    }});
     document.querySelectorAll('.card').forEach(c=>{{
+      const sec=c.closest('[data-section]');
+      const secId=sec ? sec.id : '';
+      const headingMatches=secId && sectionMatch[secId];
       const txt=(c.dataset.title + ' ' + c.dataset.source + ' ' + c.textContent).toLowerCase();
-      const show = !v || txt.includes(v);
+      const show = !v || txt.includes(v) || headingMatches;
       c.style.display= show ? '' : 'none';
       if(show) visible++;
     }});
