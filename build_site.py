@@ -645,15 +645,15 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
     </div>
 
     <div class="toolbar">
-      <nav class="tabs" role="tablist" aria-label="News sections">
-        <button class="tab" role="tab" aria-selected="true" data-filter="all">All <span>{total}</span></button>
-        <button class="tab" role="tab" aria-selected="false" data-filter="world">World <span>{len(globals_list)}</span></button>
-        <button class="tab" role="tab" aria-selected="false" data-filter="kenya">Kenya <span>{len(kenya_list)}</span></button>
-        <button class="tab" role="tab" aria-selected="false" data-filter="business">Business <span>{len(business_list)}</span></button>
-        <button class="tab" role="tab" aria-selected="false" data-filter="tech">Tech <span>{len(tech_list)}</span></button>
-        <button class="tab" role="tab" aria-selected="false" data-filter="sports">Sports <span>{len(sports_list)}</span></button>
-        <button class="tab" role="tab" aria-selected="false" data-filter="health">Health <span>{len(health_list)}</span></button>
-        <button class="tab" role="tab" aria-selected="false" data-filter="culture">Culture <span>{len(culture_list)}</span></button>
+            <nav class="tabs" role="tablist" aria-label="News sections">
+        <button type="button" class="tab" role="tab" aria-selected="true" data-filter="all" onclick="window.setFilter&&window.setFilter('all')">All <span>{total}</span></button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-filter="world" onclick="window.setFilter&&window.setFilter('world')">World <span>{len(globals_list)}</span></button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-filter="kenya" onclick="window.setFilter&&window.setFilter('kenya')">Kenya <span>{len(kenya_list)}</span></button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-filter="business" onclick="window.setFilter&&window.setFilter('business')">Business <span>{len(business_list)}</span></button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-filter="tech" onclick="window.setFilter&&window.setFilter('tech')">Tech <span>{len(tech_list)}</span></button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-filter="sports" onclick="window.setFilter&&window.setFilter('sports')">Sports <span>{len(sports_list)}</span></button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-filter="health" onclick="window.setFilter&&window.setFilter('health')">Health <span>{len(health_list)}</span></button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-filter="culture" onclick="window.setFilter&&window.setFilter('culture')">Culture <span>{len(culture_list)}</span></button>
       </nav>
       <div class="search"><input id="search" type="search" placeholder="Search headlines…" aria-label="Search" autocomplete="off"><button type="button" aria-label="Search">⌕</button></div>
     </div>
@@ -731,7 +731,7 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
 (function(){{
   const tabs=document.querySelectorAll('.tab');
   const secs={{hero:document.getElementById('sec-hero'),world:document.getElementById('sec-world'),kenya:document.getElementById('sec-kenya'),business:document.getElementById('sec-business'),tech:document.getElementById('sec-tech'),sports:document.getElementById('sec-sports'),health:document.getElementById('sec-health'),culture:document.getElementById('sec-culture')}};
-  function setFilter(f){{
+  window.setFilter = function(f){{
     tabs.forEach(t=>t.setAttribute('aria-selected', String(t.dataset.filter===f)));
     Object.keys(secs).forEach(k=>{{ secs[k].style.display=''; }});
     if(f==='all'){{}}
@@ -744,7 +744,7 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
     else if(f==='culture'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; }}
     window.scrollTo({{top:0, behavior:'smooth'}});
   }}
-  tabs.forEach(t=>t.addEventListener('click', ()=>setFilter(t.dataset.filter)));
+  tabs.forEach(t=>{{ t.addEventListener('click', ()=>window.setFilter(t.dataset.filter)); t.addEventListener('touchstart', e=>{{ e.preventDefault(); window.setFilter(t.dataset.filter); }}, {{passive:false}}); }});
   const q=document.getElementById('search');
   const searchBtn=document.querySelector('.search button');
   function doSearch(){{
