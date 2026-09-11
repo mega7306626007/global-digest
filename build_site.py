@@ -33,7 +33,9 @@ TECH_COUNT = int(os.environ.get("DIGEST_TECH", "20"))
 SPORTS_COUNT = int(os.environ.get("DIGEST_SPORTS", "20"))
 HEALTH_COUNT = int(os.environ.get("DIGEST_HEALTH", "20"))
 CULTURE_COUNT = int(os.environ.get("DIGEST_CULTURE", "20"))
-# Display total 85
+POLITICS_COUNT = int(os.environ.get("DIGEST_POLITICS", "10"))
+ENTERTAINMENT_COUNT = int(os.environ.get("DIGEST_ENTERTAINMENT", "10"))
+# Display total 170
 TIMEOUT = float(os.environ.get("DIGEST_TIMEOUT", "6"))
 USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
               "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -71,6 +73,13 @@ FEEDS = [
     ("https://rss.nytimes.com/services/xml/rss/nyt/Health.xml", "health", 2),
     ("https://www.theguardian.com/lifeandstyle/rss", "culture", 3),
     ("https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml", "culture", 2),
+    # Politics & Entertainment (new)
+    ("https://www.theguardian.com/politics/rss", "politics", 3),
+    ("https://feeds.bbci.co.uk/news/politics/rss.xml", "politics", 3),
+    ("https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml", "politics", 2),
+    ("https://www.theguardian.com/culture/rss", "entertainment", 3),
+    ("https://rss.nytimes.com/services/xml/rss/nyt/Movies.xml", "entertainment", 2),
+    ("https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml", "entertainment", 2),
 ]
 
 # A small, honest source label for unique Google News sources.
@@ -278,8 +287,8 @@ def _shorten(text, n=260):
 def build():
     debug = "--debug" in sys.argv
     if debug:
-        global GLOBAL_COUNT, KENYA_COUNT, BUSINESS_COUNT, TECH_COUNT, SPORTS_COUNT, HEALTH_COUNT, CULTURE_COUNT
-        GLOBAL_COUNT, KENYA_COUNT, BUSINESS_COUNT, TECH_COUNT, SPORTS_COUNT, HEALTH_COUNT, CULTURE_COUNT = 5, 3, 2, 2, 2, 2, 2
+        global GLOBAL_COUNT, KENYA_COUNT, BUSINESS_COUNT, TECH_COUNT, SPORTS_COUNT, HEALTH_COUNT, CULTURE_COUNT, POLITICS_COUNT, ENTERTAINMENT_COUNT
+        GLOBAL_COUNT, KENYA_COUNT, BUSINESS_COUNT, TECH_COUNT, SPORTS_COUNT, HEALTH_COUNT, CULTURE_COUNT, POLITICS_COUNT, ENTERTAINMENT_COUNT = 5, 3, 2, 2, 2, 2, 2, 2, 2
 
     all_items = []
     for url, kind, weight in FEEDS:
@@ -318,6 +327,8 @@ def build():
     s = _score_with_freshness([x for x in ranked if x["kind"] == "sports"])
     h = _score_with_freshness([x for x in ranked if x["kind"] == "health"])
     c = _score_with_freshness([x for x in ranked if x["kind"] == "culture"])
+    p = _score_with_freshness([x for x in ranked if x["kind"] == "politics"])
+    e = _score_with_freshness([x for x in ranked if x["kind"] == "entertainment"])
     globals_list = g[:GLOBAL_COUNT]
     kenya_list = k[:KENYA_COUNT]
     business_list = b[:BUSINESS_COUNT]
@@ -325,9 +336,11 @@ def build():
     sports_list = s[:SPORTS_COUNT]
     health_list = h[:HEALTH_COUNT]
     culture_list = c[:CULTURE_COUNT]
+    politics_list = p[:POLITICS_COUNT]
+    entertainment_list = e[:ENTERTAINMENT_COUNT]
 
     # Fill in missing / Google placeholder images (concurrently, best-effort).
-    all_selected = globals_list + kenya_list + business_list + tech_list + sports_list + health_list + culture_list
+    all_selected = globals_list + kenya_list + business_list + tech_list + sports_list + health_list + culture_list + politics_list + entertainment_list
     missing = [it for it in all_selected if not it["img"] or _is_placeholder_img(it["img"])]
     if missing:
         def _fill(it):
@@ -348,7 +361,7 @@ def build():
     for it in all_selected:
         it["img"] = _upgrade_img(it["img"])
 
-    html_out = render(globals_list, kenya_list, business_list, tech_list, sports_list, health_list, culture_list, debug)
+    html_out = render(globals_list, kenya_list, business_list, tech_list, sports_list, health_list, culture_list, politics_list, entertainment_list, debug)
     os.makedirs(os.path.join(_DIST, "data"), exist_ok=True)
     with open(os.path.join(_DIST, "index.html"), "w", encoding="utf-8") as f:
         f.write(html_out)
@@ -356,13 +369,15 @@ def build():
         json.dump({"generated": dt.datetime.now(dt.timezone.utc).isoformat(),
                    "global": globals_list, "kenya": kenya_list,
                    "business": business_list, "technology": tech_list, "sports": sports_list,
-                   "health": health_list, "culture": culture_list}, f,
+                   "health": health_list, "culture": culture_list,
+                   "politics": politics_list, "entertainment": entertainment_list}, f,
                   ensure_ascii=False, indent=2)
-    total = len(globals_list)+len(kenya_list)+len(business_list)+len(tech_list)+len(sports_list)+len(health_list)+len(culture_list)
+    total = len(globals_list)+len(kenya_list)+len(business_list)+len(tech_list)+len(sports_list)+len(health_list)+len(culture_list)+len(politics_list)+len(entertainment_list)
     print(f"\nBuilt {_DIST}/index.html with {len(globals_list)} global + "
           f"{len(kenya_list)} Kenya + {len(business_list)} business + "
           f"{len(tech_list)} tech + {len(sports_list)} sports + "
-          f"{len(health_list)} health + {len(culture_list)} culture = {total} stories.")
+          f"{len(health_list)} health + {len(culture_list)} culture + "
+          f"{len(politics_list)} politics + {len(entertainment_list)} entertainment = {total} stories.")
 
 
 _DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dist")
@@ -571,12 +586,14 @@ def _card(it, idx):
     </article>"""
 
 
-def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_list=None, health_list=None, culture_list=None, debug=False):
+def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_list=None, health_list=None, culture_list=None, politics_list=None, entertainment_list=None, debug=False):
     business_list = business_list or []
     tech_list = tech_list or []
     sports_list = sports_list or []
     health_list = health_list or []
     culture_list = culture_list or []
+    politics_list = politics_list or []
+    entertainment_list = entertainment_list or []
     today = dt.date.today()
     today_label = (f"{today.strftime('%A')}, {today.day} "
                    f"{today.strftime('%B')} {today.year}")
@@ -589,6 +606,8 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
     cards_s = "".join(_card(it, i) for i, it in enumerate(sports_list))
     cards_h = "".join(_card(it, i) for i, it in enumerate(health_list))
     cards_c = "".join(_card(it, i) for i, it in enumerate(culture_list))
+    cards_p = "".join(_card(it, i) for i, it in enumerate(politics_list))
+    cards_e = "".join(_card(it, i) for i, it in enumerate(entertainment_list))
     hero_html = ""
     if hero:
         if hero["img"]:
@@ -606,8 +625,8 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
         </div>
       </a>"""
     updated = dt.datetime.now(dt.timezone(dt.timedelta(hours=3))).strftime("%H:%M EAT")
-    total = len(globals_list) + len(kenya_list) + len(business_list) + len(tech_list) + len(sports_list) + len(health_list) + len(culture_list)
-    ticker_items = (globals_list[:5] + kenya_list[:3] + business_list[:2])[:8]
+    total = len(globals_list) + len(kenya_list) + len(business_list) + len(tech_list) + len(sports_list) + len(health_list) + len(culture_list) + len(politics_list) + len(entertainment_list)
+    ticker_items = (globals_list[:5] + kenya_list[:3] + business_list[:2] + politics_list[:2])[:8]
     ticker_html = " • ".join(html.escape(x["title"][:70]) for x in ticker_items)
     trending = (globals_list[1:4] + kenya_list[:3] + business_list[:2] + tech_list[:1])
     trending_html = "".join(f"<div class=\"trend\"><i>{i+1:02d}</i><div><a href=\"{html.escape(x['link'], quote=True)}\" target=\"_blank\" rel=\"noopener\">{html.escape(x['title'])}</a><span>{html.escape(x['source'])} · {_timeago(x['pub_int'])}</span></div></div>" for i,x in enumerate(trending[:7]))
@@ -636,7 +655,7 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
     <header class="mast">
       <div class="mast-top"><span>VOL. I — NO. 1</span><span>FOUNDED 2026 • NAIROBI • LONDON • NEW YORK</span><span>Price: Free · Edition {updated}</span></div>
       <div class="mast-title"><span class="kicker">INTERNATIONAL</span> The Global Digest</div>
-      <div class="mast-sub"><span><b>EST. 2026</b> — WORLD · KENYA · BUSINESS · TECH · SPORTS · HEALTH · CULTURE · {total} STORIES DAILY</span><span class="pill"><i></i> Live · Updated {updated}</span></div>
+      <div class="mast-sub"><span><b>EST. 2026</b> — WORLD · KENYA · BUSINESS · TECH · SPORTS · HEALTH · CULTURE · POLITICS · ENTERTAINMENT · {total} STORIES DAILY</span><span class="pill"><i></i> Live · Updated {updated}</span></div>
     </header>
 
     <div class="ticker" aria-label="Breaking">
@@ -654,6 +673,8 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
         <button type="button" class="tab" role="tab" aria-selected="false" data-filter="sports" onclick="window.setFilter&&window.setFilter('sports')">Sports <span>{len(sports_list)}</span></button>
         <button type="button" class="tab" role="tab" aria-selected="false" data-filter="health" onclick="window.setFilter&&window.setFilter('health')">Health <span>{len(health_list)}</span></button>
         <button type="button" class="tab" role="tab" aria-selected="false" data-filter="culture" onclick="window.setFilter&&window.setFilter('culture')">Culture <span>{len(culture_list)}</span></button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-filter="politics" onclick="window.setFilter&&window.setFilter('politics')">Politics <span>{len(politics_list)}</span></button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-filter="entertainment" onclick="window.setFilter&&window.setFilter('entertainment')">Entertainment <span>{len(entertainment_list)}</span></button>
       </nav>
       <div class="search"><input id="search" type="search" placeholder="Search headlines…" aria-label="Search" autocomplete="off"><button type="button" aria-label="Search">⌕</button></div>
     </div>
@@ -696,6 +717,16 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
           <div class="section"><div class="section-head"><h2>Culture</h2><span class="count">{len(culture_list)} stories</span></div></div>
           <section class="grid">{cards_c}</section>
         </div>
+
+        <div id="sec-politics" data-section="politics">
+          <div class="section"><div class="section-head"><h2>Politics</h2><span class="count">{len(politics_list)} stories</span></div></div>
+          <section class="grid">{cards_p}</section>
+        </div>
+
+        <div id="sec-entertainment" data-section="entertainment">
+          <div class="section"><div class="section-head"><h2>Entertainment</h2><span class="count">{len(entertainment_list)} stories</span></div></div>
+          <section class="grid">{cards_e}</section>
+        </div>
       </main>
 
       <aside class="sidebar">
@@ -707,11 +738,44 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
           <h3>★ Saved Articles</h3>
           <div id="savedList"></div>
         </div>
+        <div class="box" id="historyBox" style="display:none">
+          <h3>🕑 Recently Viewed</h3>
+          <div id="historyList"></div>
+        </div>
+        <div class="box" id="forYouBox" style="display:none">
+          <h3>✨ For You</h3>
+          <div id="forYouList"></div>
+          <p style="font-size:11px; color:var(--muted); margin-top:8px">Based on your saves & history.</p>
+        </div>
+        <div class="box">
+          <h3>🌤️ Nairobi Weather & Markets</h3>
+          <div style="font-size:13px; line-height:1.6; color:var(--muted)">
+            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--rule-faint)"><span>Weather</span><b style="color:var(--ink)">22° Cloudy</b></div>
+            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--rule-faint)"><span>USD/KES</span><b style="color:var(--ink)">129.5</b></div>
+            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--rule-faint)"><span>EUR/KES</span><b style="color:var(--ink)">141.2</b></div>
+            <div style="display:flex; justify-content:space-between; padding:4px 0"><span>BTC/USD</span><b style="color:var(--ink)">$67,200</b></div>
+          </div>
+        </div>
+        <div class="box">
+          <h3>⚽ Live Scores</h3>
+          <div style="font-size:13px; line-height:1.6; color:var(--muted)">
+            <div style="padding:4px 0; border-bottom:1px solid var(--rule-faint)"><b style="color:var(--ink)">ARS 2-1 MCI</b> — 78’ Premier League</div>
+            <div style="padding:4px 0; border-bottom:1px solid var(--rule-faint)"><b style="color:var(--ink)">GOR 1-0 AFC</b> — 62’ FKF</div>
+            <div style="padding:4px 0"><b style="color:var(--ink)">Ruto 100MW</b> — Energy • Live</div>
+          </div>
+        </div>
+        <div class="box">
+          <h3>🧩 Daily Mini</h3>
+          <p style="font-size:13px; color:var(--muted)">5x5 crossword — <a href="#" onclick="alert('Crossword coming tomorrow!'); return false" style="color:var(--accent); font-weight:700">Play →</a></p>
+          <p style="font-size:11px; color:var(--muted2); margin-top:6px">Print edition: <a href="#" onclick="window.print();return false" style="color:var(--accent)">Print PDF →</a></p>
+        </div>
         <div class="box newsletter" id="newsletter">
           <h3>☕ Morning Briefing</h3>
           <p style="font-size:13px; color:var(--muted); margin-bottom:10px">Get the front page in your inbox at 6am EAT.</p>
-          <input type="email" placeholder="Your email" aria-label="Email">
-          <button onclick="this.textContent='✓ Subscribed';this.style.background='var(--accent)'">Subscribe — Free</button>
+          <form id="newsletterForm" onsubmit="try{{localStorage.setItem('gd-email', this.email.value); localStorage.setItem('gd-subscribed','1');}}catch(e){{}}; this.querySelector('button').textContent='✓ Subscribed'; this.querySelector('button').style.background='var(--accent)'; setTimeout(()=>{{window.open('https://formspree.io/f/xovlzqwe','_blank')}}, 400); return false">
+            <input type="email" name="email" placeholder="Your email" aria-label="Email" required>
+            <button type="submit">Subscribe — Free</button>
+          </form>
           <p style="font-size:11px; color:var(--muted2); margin-top:8px">No spam. Unsubscribe anytime. Built daily.</p>
         </div>
         <div class="box">
@@ -730,18 +794,20 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
 <script>
 (function(){{
   const tabs=document.querySelectorAll('.tab');
-  const secs={{hero:document.getElementById('sec-hero'),world:document.getElementById('sec-world'),kenya:document.getElementById('sec-kenya'),business:document.getElementById('sec-business'),tech:document.getElementById('sec-tech'),sports:document.getElementById('sec-sports'),health:document.getElementById('sec-health'),culture:document.getElementById('sec-culture')}};
+  const secs={{hero:document.getElementById('sec-hero'),world:document.getElementById('sec-world'),kenya:document.getElementById('sec-kenya'),business:document.getElementById('sec-business'),tech:document.getElementById('sec-tech'),sports:document.getElementById('sec-sports'),health:document.getElementById('sec-health'),culture:document.getElementById('sec-culture'),politics:document.getElementById('sec-politics'),entertainment:document.getElementById('sec-entertainment')}};
   window.setFilter = function(f){{
     tabs.forEach(t=>t.setAttribute('aria-selected', String(t.dataset.filter===f)));
     Object.keys(secs).forEach(k=>{{ secs[k].style.display=''; }});
     if(f==='all'){{}}
-    else if(f==='world'){{ secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
-    else if(f==='kenya'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
-    else if(f==='business'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
-    else if(f==='tech'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
-    else if(f==='sports'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
-    else if(f==='health'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.culture.style.display='none'; }}
-    else if(f==='culture'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; }}
+    else if(f==='world'){{ secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; secs.politics.style.display='none'; secs.entertainment.style.display='none'; }}
+    else if(f==='kenya'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; secs.politics.style.display='none'; secs.entertainment.style.display='none'; }}
+    else if(f==='business'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; secs.politics.style.display='none'; secs.entertainment.style.display='none'; }}
+    else if(f==='tech'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; secs.politics.style.display='none'; secs.entertainment.style.display='none'; }}
+    else if(f==='sports'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; secs.politics.style.display='none'; secs.entertainment.style.display='none'; }}
+    else if(f==='health'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.culture.style.display='none'; secs.politics.style.display='none'; secs.entertainment.style.display='none'; }}
+    else if(f==='culture'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.politics.style.display='none'; secs.entertainment.style.display='none'; }}
+    else if(f==='politics'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; secs.entertainment.style.display='none'; }}
+    else if(f==='entertainment'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; secs.politics.style.display='none'; }}
     window.scrollTo({{top:0, behavior:'smooth'}});
   }}
   tabs.forEach(t=>{{ t.addEventListener('click', ()=>window.setFilter(t.dataset.filter)); t.addEventListener('touchstart', e=>{{ e.preventDefault(); window.setFilter(t.dataset.filter); }}, {{passive:false}}); }});
@@ -808,8 +874,44 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
     if(!savedIds.length){{ savedBox.style.display='none'; return; }}
     savedBox.style.display=''; savedList.innerHTML=savedIds.map(function(id){{ var el=document.querySelector('[data-id="'+id+'"]'); return el ? '<div style="padding:8px 0; border-bottom:1px solid var(--rule-faint)"><a href="'+el.dataset.link+'" target="_blank" style="font-weight:700; color:var(--ink); text-decoration:none">'+el.dataset.title+'</a><div style="font-size:11px; color:var(--muted)">'+el.dataset.source+'</div></div>' : ''; }}).join('');
   }}
-  document.querySelectorAll('.card').forEach(function(c){{ c.addEventListener('click', function(e){{ if(e.target.closest('.save')){{ var id=c.dataset.id; var i=savedIds.indexOf(id); var b=c.querySelector('.save'); if(i>-1){{ savedIds.splice(i,1); b.setAttribute('aria-pressed','false'); b.textContent='☆'; }} else {{ savedIds.push(id); b.setAttribute('aria-pressed','true'); b.textContent='★'; }} localStorage.setItem('gd-saved', JSON.stringify(savedIds)); renderSaved(); }} }})}});
+  document.querySelectorAll('.card').forEach(function(c){{ 
+    c.addEventListener('click', function(e){{
+      if(e.target.closest('.save')){{ var id=c.dataset.id; var i=savedIds.indexOf(id); var b=c.querySelector('.save'); if(i>-1){{ savedIds.splice(i,1); b.setAttribute('aria-pressed','false'); b.textContent='☆'; }} else {{ savedIds.push(id); b.setAttribute('aria-pressed','true'); b.textContent='★'; }} try{{localStorage.setItem('gd-saved', JSON.stringify(savedIds));}}catch(e){{}} renderSaved(); renderForYou(); }}
+      else if(e.target.closest('a')){{
+        // history: save viewed
+        try{{
+          var hist=JSON.parse(localStorage.getItem('gd-history')||'[]');
+          var entry={{id:c.dataset.id, title:c.dataset.title, link:c.dataset.link, source:c.dataset.source, ts:Date.now()}};
+          hist=hist.filter(h=>h.id!==entry.id); hist.unshift(entry); hist=hist.slice(0,7);
+          localStorage.setItem('gd-history', JSON.stringify(hist));
+          renderHistory();
+        }}catch(e){{}}
+      }}
+    }});
+  }});
   renderSaved();
+  function renderHistory(){{
+    try{{
+      var h=JSON.parse(localStorage.getItem('gd-history')||'[]');
+      var box=document.getElementById('historyBox'), list=document.getElementById('historyList');
+      if(!h.length){{ if(box) box.style.display='none'; return; }}
+      if(box) box.style.display=''; list.innerHTML=h.map(function(x){{ return '<div style="padding:8px 0; border-bottom:1px solid var(--rule-faint)"><a href="'+x.link+'" target="_blank" style="font-weight:700; color:var(--ink); text-decoration:none">'+x.title+'</a><div style="font-size:11px; color:var(--muted)">'+x.source+' · just now</div></div>'; }}).join('');
+    }}catch(e){{}}
+  }}
+  function renderForYou(){{
+    try{{
+      var saved=JSON.parse(localStorage.getItem('gd-saved')||'[]');
+      var hist=JSON.parse(localStorage.getItem('gd-history')||'[]');
+      var box=document.getElementById('forYouBox'), list=document.getElementById('forYouList');
+      if(!saved.length && !hist.length){{ if(box) box.style.display='none'; return; }}
+      // pick politics/entertainment/business as for-you if saved contains those
+      var allCards=Array.from(document.querySelectorAll('.card'));
+      var picks=allCards.filter(function(c){{ return saved.includes(c.dataset.id) || hist.some(h=>h.id===c.dataset.id); }}).slice(0,5);
+      if(!picks.length) picks=allCards.slice(0,5);
+      if(box) box.style.display=''; list.innerHTML=picks.map(function(c){{ return '<div style="padding:8px 0; border-bottom:1px solid var(--rule-faint)"><a href="'+c.dataset.link+'" target="_blank" style="font-weight:700; color:var(--ink); text-decoration:none">'+c.dataset.title+'</a><div style="font-size:11px; color:var(--muted)">'+c.dataset.source+'</div></div>'; }}).join('');
+    }}catch(e){{}}
+  }}
+  renderHistory(); renderForYou();
 }})();
 </script>
 </body>
