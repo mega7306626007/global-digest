@@ -453,10 +453,11 @@ _CSS = """
     .toolbar{display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:14px 0; border-bottom:1px solid var(--rule-light); background: var(--paper); position:sticky; top:0; z-index:15; backdrop-filter: blur(8px)}
     .tabs{display:flex; gap:0; background: var(--ink); padding:0; border:1px solid var(--rule); flex:1; min-width:280px; border-radius:6px; overflow:hidden}
     .tab{flex:1; appearance:none; border:0; border-right:1px solid #2a2a2a; background: var(--ink); color:#f5f5f5;
-      padding:11px 8px; font-family: system-ui, sans-serif; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+      padding:14px 8px; font-family: system-ui, sans-serif; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
       cursor:pointer; transition: background .15s ease, color .15s ease}
     .tab:last-child{border-right:0}
     .tab:hover{background:#1f1f1f}
+    .tab:active{transform: scale(0.98)}
     .tab[aria-selected="true"]{background:#fff; color:var(--ink); box-shadow: inset 0 -3px 0 var(--accent)}
     [data-theme="dark"] .tab[aria-selected="true"]{background:var(--paper-2); color:var(--ink)}
     .tab span{font-weight:400; opacity:.7; margin-left:3px}
@@ -549,7 +550,7 @@ _CSS = """
     [data-theme="dark"] .search input{color:var(--ink) !important; background:var(--paper-2) !important}
     .newsletter input::placeholder{color:var(--muted2)}
     [data-theme="dark"] .newsletter input{background:var(--paper-2); color:var(--ink)}
-    .newsletter button{width:100%; padding:11px; background:var(--ink); color:#fff; border:0; border-radius:6px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; transition: background .15s ease}
+    .newsletter button{width:100%; padding:11px; background:var(--ink); color:#fff; border:0; border-radius:6px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; transition: background .15s ease, transform .08s ease; touch-action: manipulation; user-select:none; -webkit-tap-highlight-color: transparent; min-height:44px}
     .newsletter button:hover{background:var(--accent)}
     .backtop{position:fixed; bottom:18px; right:18px; width:44px; height:44px; border-radius:50%; background:var(--ink); color:#fff; border:0; display:grid; place-items:center; cursor:pointer; box-shadow: var(--shadow-hover); opacity:0; pointer-events:none; transition: opacity .2s ease, transform .2s ease; z-index:20}
     .backtop.show{opacity:1; pointer-events:auto}
@@ -768,18 +769,30 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
   const secs={{hero:document.getElementById('sec-hero'),world:document.getElementById('sec-world'),kenya:document.getElementById('sec-kenya'),business:document.getElementById('sec-business'),tech:document.getElementById('sec-tech'),sports:document.getElementById('sec-sports'),health:document.getElementById('sec-health'),culture:document.getElementById('sec-culture')}};
   function setFilter(f){{
     tabs.forEach(t=>t.setAttribute('aria-selected', String(t.dataset.filter===f)));
-    Object.keys(secs).forEach(k=>{{ secs[k].style.display=''; }});
+    Object.keys(secs).forEach(k=>{{ if(secs[k]) secs[k].style.display=''; }});
     if(f==='all'){{}}
-    else if(f==='world'){{ secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
-    else if(f==='kenya'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
-    else if(f==='business'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
-    else if(f==='tech'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
-    else if(f==='sports'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.health.style.display='none'; secs.culture.style.display='none'; }}
-    else if(f==='health'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.culture.style.display='none'; }}
-    else if(f==='culture'){{ secs.hero.style.display='none'; secs.world.style.display='none'; secs.kenya.style.display='none'; secs.business.style.display='none'; secs.tech.style.display='none'; secs.sports.style.display='none'; secs.health.style.display='none'; }}
+    else if(f==='world'){{ if(secs.kenya) secs.kenya.style.display='none'; if(secs.business) secs.business.style.display='none'; if(secs.tech) secs.tech.style.display='none'; if(secs.sports) secs.sports.style.display='none'; if(secs.health) secs.health.style.display='none'; if(secs.culture) secs.culture.style.display='none'; }}
+    else if(f==='kenya'){{ if(secs.hero) secs.hero.style.display='none'; if(secs.world) secs.world.style.display='none'; if(secs.business) secs.business.style.display='none'; if(secs.tech) secs.tech.style.display='none'; if(secs.sports) secs.sports.style.display='none'; if(secs.health) secs.health.style.display='none'; if(secs.culture) secs.culture.style.display='none'; }}
+    else if(f==='business'){{ if(secs.hero) secs.hero.style.display='none'; if(secs.world) secs.world.style.display='none'; if(secs.kenya) secs.kenya.style.display='none'; if(secs.tech) secs.tech.style.display='none'; if(secs.sports) secs.sports.style.display='none'; if(secs.health) secs.health.style.display='none'; if(secs.culture) secs.culture.style.display='none'; }}
+    else if(f==='tech'){{ if(secs.hero) secs.hero.style.display='none'; if(secs.world) secs.world.style.display='none'; if(secs.kenya) secs.kenya.style.display='none'; if(secs.business) secs.business.style.display='none'; if(secs.sports) secs.sports.style.display='none'; if(secs.health) secs.health.style.display='none'; if(secs.culture) secs.culture.style.display='none'; }}
+    else if(f==='sports'){{ if(secs.hero) secs.hero.style.display='none'; if(secs.world) secs.world.style.display='none'; if(secs.kenya) secs.kenya.style.display='none'; if(secs.business) secs.business.style.display='none'; if(secs.tech) secs.tech.style.display='none'; if(secs.health) secs.health.style.display='none'; if(secs.culture) secs.culture.style.display='none'; }}
+    else if(f==='health'){{ if(secs.hero) secs.hero.style.display='none'; if(secs.world) secs.world.style.display='none'; if(secs.kenya) secs.kenya.style.display='none'; if(secs.business) secs.business.style.display='none'; if(secs.tech) secs.tech.style.display='none'; if(secs.sports) secs.sports.style.display='none'; if(secs.culture) secs.culture.style.display='none'; }}
+    else if(f==='culture'){{ if(secs.hero) secs.hero.style.display='none'; if(secs.world) secs.world.style.display='none'; if(secs.kenya) secs.kenya.style.display='none'; if(secs.business) secs.business.style.display='none'; if(secs.tech) secs.tech.style.display='none'; if(secs.sports) secs.sports.style.display='none'; if(secs.health) secs.health.style.display='none'; }}
     window.scrollTo({{top:0, behavior:'smooth'}});
   }}
-  tabs.forEach(t=>t.addEventListener('click', ()=>setFilter(t.dataset.filter)));
+  tabs.forEach(t=>{{
+    t.addEventListener('click', ()=>setFilter(t.dataset.filter));
+    t.addEventListener('touchstart', e=>{{ e.preventDefault(); setFilter(t.dataset.filter); }}, {{passive:false}});
+  }});
+  document.querySelectorAll('.section h2').forEach(h=>{{
+    h.style.cursor='pointer';
+    h.title='Tap to filter';
+    h.addEventListener('click', ()=>{{
+      const txt=h.textContent.toLowerCase().trim();
+      const map={{world:'world', kenya:'kenya', business:'business', technology:'tech', tech:'tech', sports:'sports', health:'health', culture:'culture'}};
+      for(const k in map){{ if(txt.includes(k)) {{ setFilter(map[k]); document.querySelector('.toolbar')?.scrollIntoView({{behavior:'smooth'}}); break; }} }}
+    }});
+  }});
   const q=document.getElementById('search');
   const searchBtn=document.querySelector('.search button');
   function doSearch(){{
@@ -796,7 +809,6 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
     if(hero){{
       const ht=hero.textContent.toLowerCase();
       heroVisible = !v || ht.includes(v);
-      // keep hero visible if it matches, or if any card matches (so All shows hero)
       if(v && !heroVisible && visible===0) hero.style.display='none'; else hero.style.display='';
       if(heroVisible) visible++;
     }}
@@ -830,18 +842,16 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
       }}catch(e){{}}
     }});
   }}catch(e){{}}
-  // Subscribe smooth scroll with offset
   try{{
     const subLink=document.querySelector('a[href="#newsletter"]');
     if(subLink) subLink.addEventListener('click', e=>{{ e.preventDefault(); const el=document.getElementById('newsletter'); if(el) el.scrollIntoView({{behavior:'smooth', block:'start'}}); }});
   }}catch(e){{}}
-  // Bookmarks (guarded)
   let savedIds=[];
   try{{ savedIds=JSON.parse(localStorage.getItem('gd-saved')||'[]'); }}catch(e){{ savedIds=[]; }}
   const savedBox=document.getElementById('savedBox'), savedList=document.getElementById('savedList');
   function renderSaved(){{
-    if(!savedIds.length){{ savedBox.style.display='none'; return; }}
-    savedBox.style.display=''; savedList.innerHTML=savedIds.map(function(id){{ var el=document.querySelector('[data-id="'+id+'"]'); return el ? '<div style="padding:8px 0; border-bottom:1px solid var(--rule-faint)"><a href="'+el.dataset.link+'" target="_blank" style="font-weight:700; color:var(--ink); text-decoration:none">'+el.dataset.title+'</a><div style="font-size:11px; color:var(--muted)">'+el.dataset.source+'</div></div>' : ''; }}).join('');
+    if(!savedIds.length){{ if(savedBox) savedBox.style.display='none'; return; }}
+    if(savedBox) savedBox.style.display=''; if(savedList) savedList.innerHTML=savedIds.map(function(id){{ var el=document.querySelector('[data-id="'+id+'"]'); return el ? '<div style="padding:8px 0; border-bottom:1px solid var(--rule-faint)"><a href="'+el.dataset.link+'" target="_blank" style="font-weight:700; color:var(--ink); text-decoration:none">'+el.dataset.title+'</a><div style="font-size:11px; color:var(--muted)">'+el.dataset.source+'</div></div>' : ''; }}).join('');
   }}
   document.querySelectorAll('.card').forEach(function(c){{ c.addEventListener('click', function(e){{ if(e.target.closest('.save')){{ var id=c.dataset.id; var i=savedIds.indexOf(id); var b=c.querySelector('.save'); if(i>-1){{ savedIds.splice(i,1); b.setAttribute('aria-pressed','false'); b.textContent='☆'; }} else {{ savedIds.push(id); b.setAttribute('aria-pressed','true'); b.textContent='★'; }} localStorage.setItem('gd-saved', JSON.stringify(savedIds)); renderSaved(); }} }})}});
   renderSaved();
