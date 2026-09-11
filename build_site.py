@@ -256,6 +256,31 @@ def _fetch_og_image(url):
         return _upgrade_img(html.unescape(m.group(1)))
     return None
 
+def _fetch_weather():
+    try:
+        data = _fetch("https://wttr.in/Nairobi?format=j1")
+        if data:
+            j = json.loads(data)
+            cur = j.get("current_condition", [{}])[0]
+            temp = cur.get("temp_C", "22")
+            desc = cur.get("weatherDesc", [{}])[0].get("value", "Cloudy")
+            return f"{temp}° {desc[:20]}"
+    except Exception:
+        pass
+    return "22° Nairobi"
+
+def _fetch_fx():
+    try:
+        data = _fetch("https://open.er-api.com/v6/latest/USD")
+        if data:
+            j = json.loads(data)
+            kes = j.get("rates", {}).get("KES")
+            if kes:
+                return f"USD/KES {kes:.1f}"
+    except Exception:
+        pass
+    return "USD/KES 129.5"
+
 
 _WS = re.compile(r"\s+")
 _HTML_RE = re.compile(r"<[^>]+>")
@@ -310,6 +335,8 @@ def build():
         print(f"  [ok]   {url} -> {parsed} items")
 
     ranked = _unique(all_items)
+    for kind in ["global","kenya","business","technology","sports","health","culture","politics","entertainment"]:
+        print(f"  [ranked] {kind} -> {len([x for x in ranked if x['kind']==kind])}")
     # Freshness bonus: newer stories rank higher (48h window)
     now = int(dt.datetime.now().timestamp())
     def _score_with_freshness(lst):
@@ -329,6 +356,7 @@ def build():
     c = _score_with_freshness([x for x in ranked if x["kind"] == "culture"])
     p = _score_with_freshness([x for x in ranked if x["kind"] == "politics"])
     e = _score_with_freshness([x for x in ranked if x["kind"] == "entertainment"])
+    print(f"  [scored] sports -> {len(s)} health {len(h)} culture {len(c)} politics {len(p)} entertainment {len(e)}")
     globals_list = g[:GLOBAL_COUNT]
     kenya_list = k[:KENYA_COUNT]
     business_list = b[:BUSINESS_COUNT]
@@ -361,12 +389,16 @@ def build():
     for it in all_selected:
         it["img"] = _upgrade_img(it["img"])
 
-    html_out = render(globals_list, kenya_list, business_list, tech_list, sports_list, health_list, culture_list, politics_list, entertainment_list, debug)
+    weather = _fetch_weather()
+    fx = _fetch_fx()
+    print(f"  [weather] {weather} | {fx}")
+    html_out = render(globals_list, kenya_list, business_list, tech_list, sports_list, health_list, culture_list, politics_list, entertainment_list, debug, weather, fx)
     os.makedirs(os.path.join(_DIST, "data"), exist_ok=True)
     with open(os.path.join(_DIST, "index.html"), "w", encoding="utf-8") as f:
         f.write(html_out)
     with open(os.path.join(_DIST, "data", "latest.json"), "w", encoding="utf-8") as f:
         json.dump({"generated": dt.datetime.now(dt.timezone.utc).isoformat(),
+                   "weather": weather, "fx": fx,
                    "global": globals_list, "kenya": kenya_list,
                    "business": business_list, "technology": tech_list, "sports": sports_list,
                    "health": health_list, "culture": culture_list,
@@ -586,14 +618,7 @@ def _card(it, idx):
     </article>"""
 
 
-def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_list=None, health_list=None, culture_list=None, politics_list=None, entertainment_list=None, debug=False):
-    business_list = business_list or []
-    tech_list = tech_list or []
-    sports_list = sports_list or []
-    health_list = health_list or []
-    culture_list = culture_list or []
-    politics_list = politics_list or []
-    entertainment_list = entertainment_list or []
+def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_list=None, health_list=None, culture_list=None, politics_list=None, entertainment_list=None, debug=False, weather="22° Nairobi", fx="USD/KES 129.5"):
     today = dt.date.today()
     today_label = (f"{today.strftime('%A')}, {today.day} "
                    f"{today.strftime('%B')} {today.year}")
@@ -626,6 +651,9 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
       </a>"""
     updated = dt.datetime.now(dt.timezone(dt.timedelta(hours=3))).strftime("%H:%M EAT")
     total = len(globals_list) + len(kenya_list) + len(business_list) + len(tech_list) + len(sports_list) + len(health_list) + len(culture_list) + len(politics_list) + len(entertainment_list)
+    fx_parts = fx.split()
+    fx_label = fx_parts[0] if len(fx_parts) > 0 else "USD/KES"
+    fx_value = fx_parts[1] if len(fx_parts) > 1 else fx
     ticker_items = (globals_list[:5] + kenya_list[:3] + business_list[:2] + politics_list[:2])[:8]
     ticker_html = " • ".join(html.escape(x["title"][:70]) for x in ticker_items)
     trending = (globals_list[1:4] + kenya_list[:3] + business_list[:2] + tech_list[:1])
@@ -646,7 +674,7 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
 <body>
   <div class="wrap">
     <div class="topbar">
-      <span class="weather"><i>☁︎ 22° Nairobi</i> <i>USD/KES 129.5</i> <b>{today_label}</b></span>
+      <span class="weather"><i>☁︎ {e(weather)}</i> <i>{e(fx)}</i> <b>{today_label}</b></span>
       <span class="actions">
         <button class="btn btn--dark" id="themeToggle" aria-label="Toggle theme">◐ Theme</button>
         <a class="btn" href="#newsletter">Subscribe</a>
@@ -748,12 +776,12 @@ def render(globals_list, kenya_list, business_list=None, tech_list=None, sports_
           <p style="font-size:11px; color:var(--muted); margin-top:8px">Based on your saves & history.</p>
         </div>
         <div class="box">
-          <h3>🌤️ Nairobi Weather & Markets</h3>
+          <h3>🌤️ Nairobi Weather & Markets — Live</h3>
           <div style="font-size:13px; line-height:1.6; color:var(--muted)">
-            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--rule-faint)"><span>Weather</span><b style="color:var(--ink)">22° Cloudy</b></div>
-            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--rule-faint)"><span>USD/KES</span><b style="color:var(--ink)">129.5</b></div>
-            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--rule-faint)"><span>EUR/KES</span><b style="color:var(--ink)">141.2</b></div>
-            <div style="display:flex; justify-content:space-between; padding:4px 0"><span>BTC/USD</span><b style="color:var(--ink)">$67,200</b></div>
+            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--rule-faint)"><span>Weather</span><b style="color:var(--ink)">{e(weather)}</b></div>
+            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--rule-faint)"><span>{e(fx_label)}</span><b style="color:var(--ink)">{e(fx_value)}</b></div>
+            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--rule-faint)"><span>Updated</span><b style="color:var(--ink)">{e(updated)}</b></div>
+            <div style="display:flex; justify-content:space-between; padding:4px 0"><span>Stories</span><b style="color:var(--ink)">{total} today</b></div>
           </div>
         </div>
         <div class="box">
