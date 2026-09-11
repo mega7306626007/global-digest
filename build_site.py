@@ -196,17 +196,14 @@ def _is_placeholder_img(u):
     return False
 
 def _upgrade_img(u):
-    """Upgrade tiny RSS thumbs to readable size (BBC 80/240 -> 800)."""
+    """Upgrade tiny RSS thumbs to readable size (BBC 80/240 -> 800). Guardian keep original (signature)."""
     if not u or _is_placeholder_img(u):
         return ""
     if "ichef.bbci.co.uk" in u:
-        # /80/ /240/ /240x135/ -> 800
-        u = re.sub(r"/\d+/", "/800/", u)
+        # BBC uses /80/ /240/ etc — upgrade to 800 for crisp print
         u = re.sub(r"/\d+x\d+/", "/800/", u)
-        u = u.replace("/80/", "/800/").replace("/240/", "/800/")
-    # Guardian i.guim.co.uk -> ensure width 800+
-    if "i.guim.co.uk" in u and "width=" in u:
-        u = re.sub(r"width=\d+", "width=800", u)
+        u = re.sub(r"/\d+/", "/800/", u)
+    # Don't touch i.guim.co.uk — width change breaks &s= signature (401)
     return u
 
 def _fetch_og_image(url):
@@ -495,6 +492,17 @@ _CSS = """
       .grid{grid-template-columns:1fr}
       .wrap{padding:0 12px}
       .mast-title{font-size:42px}
+    }
+    @media print {
+      body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+      .topbar, .ticker, .toolbar, .actions, .search, .save, #themeToggle{display:none !important}
+      .layout{display:block}
+      .sidebar{display:none !important}
+      .hero, .card{break-inside:avoid; box-shadow:none !important; border:1px solid #ccc !important}
+      .thumb-wrap, .hero-media{ -webkit-print-color-adjust:exact; print-color-adjust:exact}
+      .thumb, .hero-media img{display:block !important; visibility:visible !important; opacity:1 !important}
+      a{color:var(--ink) !important; text-decoration:none !important}
+      footer{break-before:avoid}
     }
 """
 
