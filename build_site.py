@@ -458,8 +458,9 @@ _CSS = """
     .tab:last-child{border-right:0}
     .tab:hover{background:#1f1f1f}
     .tab:active{transform: scale(0.98)}
-    .tab[aria-selected="true"]{background:#fff; color:var(--ink); box-shadow: inset 0 -3px 0 var(--accent)}
-    [data-theme="dark"] .tab[aria-selected="true"]{background:var(--paper-2); color:var(--ink)}
+    .tab[aria-selected="true"]{background:#fff !important; color:var(--accent) !important; box-shadow: inset 0 -4px 0 var(--accent), 0 2px 8px rgba(185,28,28,.15) !important; font-weight:800; transform: translateY(-1px)}
+    [data-theme="dark"] .tab[aria-selected="true"]{background:#fff !important; color:var(--accent) !important; box-shadow: inset 0 -4px 0 var(--accent) !important}
+    .tab[aria-selected="false"]{opacity:.92}
     .tab span{font-weight:400; opacity:.7; margin-left:3px}
     .search{position:relative; flex:0 0 280px; display:flex; align-items:center}
     .search input{width:100%; padding:11px 40px 11px 16px; border:1px solid var(--rule-light); background:#fff; color:var(--ink); border-radius:999px;
